@@ -26,6 +26,9 @@
     "through2": "~0.5.1",
     "through-pipes": "git://github.com/bholloway/through-pipes",
     "minimatch": "~0.4.0",
-    "traceur": "0.0.51"
+    "traceur": "0.0.51",
+    "gulp-inject": "latest",
+    "gulp-slash": "latest",
+    "gulp-util": "latest"
   }
 }
