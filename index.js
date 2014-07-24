@@ -126,7 +126,7 @@ module.exports = function(temp) {
         if (file.jshint && !file.jshint.success && !file.jshint.ignored) {
           (function reporter(results) {
             results.forEach(function(result) {
-              var filename = result.file;
+              var filename = sourceTracking.replace(result.file);
               var error    = result.error;
               if ((prevfile) && (prevfile !== filename) && (item) && (output.indexOf(item) < 0)) {
                 output.push(item);
