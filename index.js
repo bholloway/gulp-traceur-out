@@ -24,14 +24,15 @@ function trackSources() {
     },
     after: function() {
       return through.obj(function(file, encode, done){
-        after.push(file.path);
+        var source = minimatch.makeRe(file.path).source.replace('$', ''); // pre-compute regexp source
+        after.push(source);
         this.push(file);
         done();
       });
     },
     replace: function(text) {
       for (var i = Math.min(before.length, after.length) - 1; i >= 0; i--) {
-        var regexp = minimatch.makeRe(after[i], 'g');
+        var regexp = new RegExp(after[i], 'gm');
         text = text.replace(regexp, before[i]);
       }
       return text;
