@@ -1,0 +1,31 @@
+{
+  "name": "gulp-traceur-out",
+  "version": "0.0.1",
+  "description": "Compile a single file (per traceur --out) such that for each top level JS file all es6 imports are resolved inline.",
+  "keywords": [
+    "gulpplugin",
+    "traceur",
+    "es6",
+    "harmony",
+    "compiler",
+    "transpiler",
+    "sourcemaps"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bholloway/gulp-traceur-out"
+  },
+  "author": "Ben Holloway",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bholloway/gulp-traceur-out/issues"
+  },
+  "homepage": "https://github.com/bholloway/gulp-traceur-out",
+  "main": "index.js",
+  "dependencies": {
+    "through2": "~0.5.1",
+    "through-pipes": "git://github.com/bholloway/through-pipes",
+    "minimatch": "~0.4.0",
+    "traceur": "0.0.51"
+  }
+}
