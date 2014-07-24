@@ -256,13 +256,13 @@ module.exports = function(temp) {
 
         // infer the html base path from the file.base and use this as a base to locate
         //  the corresponding javascript file
-        var htmlPath  = slash(file.path);
-        var htmlBase  = slash(file.base);
-        var jsBase    = slash(path.resolve(jsBasePath));
-        var jsFile    = htmlPath.replace(htmlBase, jsBase).replace(/\.html?$/, '.js');
+        var htmlPath = slash(file.path);
+        var htmlBase = slash(file.base).replace(/\/$/, '');				          // likely to have a trailing slash
+        var jsBase   = slash(path.resolve(jsBasePath)).replace(/\/$/, '');	// ensure no trailing slash just in case
+        var jsFile   = htmlPath.replace(htmlBase, jsBase).replace(/\.html?$/, '.js');
         var jsSources = gulp.src(jsFile, { read: false })
           .pipe(semiflat(jsBase))
-          .pipe(slash())
+          .pipe(slash());
 
         // pass the html file into a stream that injects the given javascript source
         //  then add the resulting file to the output stream

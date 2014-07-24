@@ -1,6 +1,6 @@
 {
   "name": "gulp-traceur-out",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Compile a single file (per traceur --out) such that for each top level JS file all es6 imports are resolved inline.",
   "keywords": [
     "gulpplugin",
