@@ -8,6 +8,7 @@ var gulp = require('gulp');
 var gutil = require('gulp-util');
 var inject = require('gulp-inject');
 var slash = require('gulp-slash');
+var semiflat = require('gulp-semiflat');
 
 module.exports = function(temp) {
   'use strict';
