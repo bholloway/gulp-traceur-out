@@ -176,9 +176,9 @@ module.exports = function(temp) {
           if (analysis) {
             var specified = analysis[1];
             var filename  = analysis[2] + '.js';
-            var source    = file.traceurSource.path;
-            var isSource  = (filename === path.basename());
-            var absolute  = (isSource) ? source : path.resolve(file.base + '/' + filename);
+            var source    = file.traceurSource;
+            var isSource  = (filename === source.path.replace(source.cwd, ''));
+            var absolute  = (isSource) ? source.path : path.resolve(file.base + '/' + filename);
             message = absolute + ':0:0: Import not found: ' + specified + '\n';
           } else {
             message = file.traceurError.replace(/Error\:\s*Command failed\:\s*/g, '');
