@@ -88,10 +88,11 @@ module.exports = function(temp) {
           // traceur error implies empty file with error property
           if (error) {
             var pending = new gutil.File();
-            pending.cwd          = cwd;
-            pending.base         = outputPath;
-            pending.path         = outFile;
-            pending.traceurError = error.toString();
+            pending.cwd           = cwd;
+            pending.base          = outputPath;
+            pending.path          = outFile;
+            pending.traceurSource = slash(file);
+            pending.traceurError  = error.toString();
             stream.push(pending);
             done();
 
@@ -143,7 +144,7 @@ module.exports = function(temp) {
         this.push(file);
         done();
 
-        // display the output buffer with padding before and after and between each item
+      // display the output buffer with padding before and after and between each item
       }, function(done) {
         if ((item) && (output.indexOf(item) < 0)) {
           output.push(item);
@@ -166,23 +167,24 @@ module.exports = function(temp) {
       // push each item to an output buffer
       return through.obj(function (file, encoding, done) {
 
-        // unsuccessful element have a traceurError property
-        var errorText = file.traceurError;
-        if (errorText) {
-          var REGEXP = /[^].*Specified as (.*)\.\nImported by \.{0,2}(.*)\.\n/m;
-          var analysis = REGEXP.exec(errorText);
+        // unsuccessful element have a the correct properties
+        var isError = (file.isNull) && (file.traceurError) && (file.traceurSource);
+        if (isError) {
+          var REGEXP   = /[^].*Specified as (.*)\.\nImported by \.{0,2}(.*)\.\n/m;
+          var analysis = REGEXP.exec(file.traceurError);
           var message;
           if (analysis) {
             var specified = analysis[1];
-            var filename = analysis[2] + '.js';
-            var isSource = minimatch.makeRe(filename + '$').test(file.path);
-            var absolute = (isSource) ? file.path : path.resolve(file.base + '/' + filename);
+            var filename  = analysis[2] + '.js';
+            var source    = file.traceurSource.path;
+            var isSource  = (filename === path.basename());
+            var absolute  = (isSource) ? source : path.resolve(file.base + '/' + filename);
             message = absolute + ':0:0: Import not found: ' + specified + '\n';
           } else {
-            message = errorText.replace(/Error\:\s*Command failed\:\s*/g, '');
+            message = file.traceurError.replace(/Error\:\s*Command failed\:\s*/g, '');
           }
           var normalised = slash(message);
-          var unmapped = sourceTracking.replace(normalised);
+          var unmapped   = sourceTracking.replace(normalised);
           if (output.indexOf(unmapped) < 0) {
             output.push(unmapped);
           }
@@ -213,8 +215,8 @@ module.exports = function(temp) {
 
         // adjust a single value
         function adjust(candidate) {
-          var normalised = slash(candidate);
-          var unmapped = sourceTracking.replace(normalised);
+          var normalised   = slash(candidate);
+          var unmapped     = sourceTracking.replace(normalised);
           var rootRelative = '/' + path.relative(file.cwd, unmapped);
           return slash(rootRelative);
         }
@@ -257,10 +259,10 @@ module.exports = function(temp) {
 
         // infer the html base path from the file.base and use this as a base to locate
         //  the corresponding javascript file
-        var htmlPath = slash(file.path);
-        var htmlBase = slash(file.base).replace(/\/$/, '');				          // likely to have a trailing slash
-        var jsBase   = slash(path.resolve(jsBasePath)).replace(/\/$/, '');	// ensure no trailing slash just in case
-        var jsFile   = htmlPath.replace(htmlBase, jsBase).replace(/\.html?$/, '.js');
+        var htmlPath  = slash(file.path);
+        var htmlBase  = slash(file.base).replace(/\/$/, '');				          // likely to have a trailing slash
+        var jsBase    = slash(path.resolve(jsBasePath)).replace(/\/$/, '');	// ensure no trailing slash just in case
+        var jsFile    = htmlPath.replace(htmlBase, jsBase).replace(/\.html?$/, '.js');
         var jsSources = gulp.src(jsFile, { read: false })
           .pipe(semiflat(jsBase))
           .pipe(slash());
