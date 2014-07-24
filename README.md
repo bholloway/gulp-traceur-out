@@ -10,8 +10,6 @@ Install with [npm](https://npmjs.org/package/gulp-traceur-out).
 npm install --save-dev gulp-traceur-out
 ```
 
-## Examples
+## Usage
 
-```js
-// TODO
-```
+Please refer to the [proof of concept](https://github.com/bholloway/es6-modular) project.
