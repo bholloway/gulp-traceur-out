@@ -62,6 +62,9 @@ function trackSources() {
  */
 module.exports = function(outputPath, bannerWidth) {
   'use strict';
+  var hr             = new Array((Number(bannerWidth) || 0) + 1); // this is a good trick to repeat a character N times
+  var start          = (hr.length > 1) ? (hr.join('\u25BC') + '\n') : '';
+  var stop           = (hr.length > 1) ? (hr.join('\u25B2') + '\n') : '';
   var sourceTracking = trackSources();
   return {
 
@@ -182,8 +185,7 @@ module.exports = function(outputPath, bannerWidth) {
           output.push(item);
         }
         if (output.length) {
-          var hr = new Array(number(bannerWidth) + 1); // repeat 80 times
-          process.stdout.write(hr.join('\u25BC') + '\n' + output.join('\n') + '\n' + hr.join('\u25B2'));
+          process.stdout.write(start + '\n' + output.join('\n') + '\n' + stop);
         }
         done();
       });
@@ -237,8 +239,7 @@ module.exports = function(outputPath, bannerWidth) {
 
       }, function (done) {
         if (output.length) {
-          var hr = new Array(number(bannerWidth) + 1); // repeat 80 times
-          process.stdout.write(hr.join('\u25BC') + '\n' + output.join('\n') + '\n' + hr.join('\u25B2'));
+          process.stdout.write(start + '\n' + output.join('\n') + '\n' + stop);
         }
         done();
       });
