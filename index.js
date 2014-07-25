@@ -12,29 +12,44 @@ var semiflat = require('gulp-semiflat');
 
 function trackSources() {
   'use strict';
-  var before = [ ];
-  var after  = [ ];
+  var sessions = [ ];
   return {
-    before: function() {
-      return through.obj(function(file, encode, done){
-        before.push(file.path);
-        this.push(file);
-        done();
-      });
+    session: function() {
+      var before  = [ ];
+      var after   = [ ];
+      var session = {
+        before: function() {
+          return through.obj(function(file, encode, done){
+            before.push(path.resolve(file.path));  // enforce correct path format for the platform
+            this.push(file);
+            done();
+          });
+        },
+        after: function() {
+          return through.obj(function(file, encode, done){
+            var source = minimatch.makeRe(file.path)
+              .source.replace(/^\^|\$$/g, '') // match text anywhere on the line by removing line start/end
+              .replace(/\\\//g, '[\\\\\\/]'); // detect any platform path format
+            after.push(source);
+            this.push(file);
+            done();
+          });
+        },
+        replace: function(text) {
+          for (var i = Math.min(before.length, after.length) - 1; i >= 0; i--) {
+          var regexp = new RegExp(after[i], 'gm');
+            text = text.replace(regexp, before[i]);
+          }
+          return text;
+        }
+	    };
+      sessions.push(session);
+      return session;
     },
-    after: function() {
-      return through.obj(function(file, encode, done){
-        var source = minimatch.makeRe(file.path).source.replace('$', ''); // pre-compute regexp source
-        after.push(source);
-        this.push(file);
-        done();
+	  replace: function(text) {
+      sessions.forEach(function(session) {
+	      text = session.replace(text);
       });
-    },
-    replace: function(text) {
-      for (var i = Math.min(before.length, after.length) - 1; i >= 0; i--) {
-        var regexp = new RegExp(after[i], 'gm');
-        text = text.replace(regexp, before[i]);
-      }
       return text;
     }
   };
@@ -51,14 +66,28 @@ module.exports = function(temp) {
      * Outputs a stream of the same files, now found in the temp directory.
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
+    libraries: function() {
+      return throughPipes(function(readable) {
+        var session = sourceTracking.session();
+        return readable
+          .pipe(session.before())
+          .pipe(gulp.dest(temp))
+          .pipe(session.after());
+      });
+    },
+
+    /**
+     * Define source files from the input stream but do note copy to the temporary directory.
+     * Useful for enforcing correct path format in error messages.
+     * Outputs a stream of the same files.
+     * @returns {stream.Through} A through stream that performs the operation of a gulp stream
+     */
     sources: function() {
       return throughPipes(function(readable) {
+	    var session = sourceTracking.session();
         return readable
-          .pipe(slash())
-          .pipe(sourceTracking.before())
-          .pipe(gulp.dest(temp))
-          .pipe(slash())
-          .pipe(sourceTracking.after());
+          .pipe(session.before())
+          .pipe(session.after());
       });
     },
 
@@ -73,12 +102,11 @@ module.exports = function(temp) {
         var stream = this;
 
         // get parameters platform non-specific
-        var cwd      = slash(file.cwd);
-        var relative = slash(file.relative);
-        var base     = slash(path.resolve(outputPath));
-        var filename = slash(path.basename(file.path));
-        var outFile  = base + '/' + filename;
-        var outPath  = base + '/' + relative.replace(filename, '');
+        var cwd      = file.cwd;
+        var relative = file.relative;
+        var filename = path.basename(file.path);
+        var outFile  = path.resolve(outputPath + '/' + filename);
+        var outPath  = path.resolve(outputPath + '/' + relative.replace(filename, ''));
 
         // call traceur from the shell
         //  at the time of writing there is no stable API for single file output
@@ -91,7 +119,7 @@ module.exports = function(temp) {
             pending.cwd           = cwd;
             pending.base          = outputPath;
             pending.path          = outFile;
-            pending.traceurSource = slash(file);
+            pending.traceurSource = file;
             pending.traceurError  = error.toString();
             stream.push(pending);
             done();
@@ -101,7 +129,6 @@ module.exports = function(temp) {
           } else {
             gulp.src(outFile.replace(/\.js$/, '.*'))
               .pipe(gulp.dest(outPath))
-              .pipe(slash())
               .pipe(semiflat(base))
               .on('data', function(file) {
                 stream.push(file);
@@ -165,37 +192,43 @@ module.exports = function(temp) {
       var output = [ ];
 
       // push each item to an output buffer
+      // display the output buffer with padding before and after and between each item
       return through.obj(function (file, encoding, done) {
 
         // unsuccessful element have a the correct properties
         var isError = (file.isNull) && (file.traceurError) && (file.traceurSource);
         if (isError) {
-          var REGEXP   = /[^].*Specified as (.*)\.\nImported by \.{0,2}(.*)\.\n/m;
-          var analysis = REGEXP.exec(file.traceurError);
+    
+          // bad import statement
+          var analysis = (/[^].*Specified as (.*)\.\nImported by \.{0,2}(.*)\.\n/m).exec(file.traceurError);
           var message;
           if (analysis) {
             var specified = analysis[1];
             var filename  = analysis[2] + '.js';
             var source    = file.traceurSource;
-            var isSource  = (filename === source.path.replace(source.cwd, ''));
+            var isSource  = (path.resolve(source.cwd + filename) === path.resolve(source.path));
             var absolute  = (isSource) ? source.path : path.resolve(file.base + '/' + filename);
             message = absolute + ':0:0: Import not found: ' + specified + '\n';
+      
+          // all other errors
           } else {
-            message = file.traceurError.replace(/Error\:\s*Command failed\:\s*/g, '');
+            message = file.traceurError
+              .replace(/^Error\:\s*Command failed\:\s*(.*)$/gm, '$1')
+              .replace(/^\[Error\:\s*(.*)\s*\]$/gm, '$1');   // for windows
           }
-          var normalised = slash(message);
-          var unmapped   = sourceTracking.replace(normalised);
+      
+          // report unique errors in original sources
+          var unmapped = sourceTracking.replace(message);
           if (output.indexOf(unmapped) < 0) {
             output.push(unmapped);
           }
 
-          // only successful elements to the output
+        // only successful elements to the output
         } else {
           this.push(file);
         }
         done();
 
-        // display the output buffer with padding before and after and between each item
       }, function (done) {
         if (output.length) {
           process.stdout.write('\n' + output.join('\n') + '\n');
@@ -215,10 +248,9 @@ module.exports = function(temp) {
 
         // adjust a single value
         function adjust(candidate) {
-          var normalised   = slash(candidate);
-          var unmapped     = sourceTracking.replace(normalised);
-          var rootRelative = '/' + path.relative(file.cwd, unmapped);
-          return slash(rootRelative);
+          var unmapped     = sourceTracking.replace(candidate);
+          var rootRelative = '/' + slash(path.relative(file.cwd, unmapped));
+          return rootRelative;
         }
 
         // adjust map for arrays
@@ -259,9 +291,9 @@ module.exports = function(temp) {
 
         // infer the html base path from the file.base and use this as a base to locate
         //  the corresponding javascript file
-        var htmlPath  = slash(file.path);
-        var htmlBase  = slash(file.base).replace(/\/$/, '');				          // likely to have a trailing slash
-        var jsBase    = slash(path.resolve(jsBasePath)).replace(/\/$/, '');	// ensure no trailing slash just in case
+        var htmlPath  = path.resolve(file.path);
+        var htmlBase  = path.resolve(file.base);
+        var jsBase    = path.resolve(jsBasePath);
         var jsFile    = htmlPath.replace(htmlBase, jsBase).replace(/\.html?$/, '.js');
         var jsSources = gulp.src(jsFile, { read: false })
           .pipe(semiflat(jsBase))
