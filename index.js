@@ -215,7 +215,7 @@ module.exports = function(temp) {
           } else {
             message = file.traceurError
               .replace(/^Error\:\s*Command failed\:\s*(.*)$/gm, '$1')
-              .replace(/^\[Error\:\s*(.*)\s*\]$/gm, '$1');   // for windows
+              .replace(/^\[Error\:\s*([^]*)\s*\]$/gm, '$1');   // for windows (n.b. [^]* is .* multiline)
           }
       
           // report unique errors in original sources
