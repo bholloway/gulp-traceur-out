@@ -105,20 +105,21 @@ module.exports = function(temp) {
         var cwd      = file.cwd;
         var relative = file.relative;
         var filename = path.basename(file.path);
-        var outFile  = path.resolve(outputPath + '/' + filename);
+        var outBase  = path.resolve(outputPath);
         var outPath  = path.resolve(outputPath + '/' + relative.replace(filename, ''));
+        var outTemp  = path.resolve(outputPath + '/' + filename);
 
         // call traceur from the shell
         //  at the time of writing there is no stable API for single file output
-        var command  = [ 'traceur', '--source-maps', '--out', outFile, file.path ].join(' ');
+        var command  = [ 'traceur', '--source-maps', '--out', outTemp, file.path ].join(' ');
         child.exec(command, { cwd: cwd }, function(error) {
 
           // traceur error implies empty file with error property
           if (error) {
             var pending = new gutil.File();
             pending.cwd           = cwd;
-            pending.base          = outputPath;
-            pending.path          = outFile;
+            pending.base          = outBase;
+            pending.path          = outPath;
             pending.traceurSource = file;
             pending.traceurError  = error.toString();
             stream.push(pending);
@@ -127,9 +128,9 @@ module.exports = function(temp) {
             // output JS and MAP files to the stream
             //  ensure that their paths are platform non-specific and relative to the outputPath
           } else {
-            gulp.src(outFile.replace(/\.js$/, '.*'))
+            gulp.src(outTemp.replace(/\.js$/, '.*'))
               .pipe(gulp.dest(outPath))
-              .pipe(semiflat(base))
+              .pipe(semiflat(outBase))
               .on('data', function(file) {
                 stream.push(file);
               }).on('end', function() {
