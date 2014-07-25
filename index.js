@@ -182,7 +182,7 @@ module.exports = function(outputPath, bannerWidth) {
           output.push(item);
         }
         if (output.length) {
-          var hr = new Array(bannerWidth + 1); // repeat 80 times
+          var hr = new Array(number(bannerWidth) + 1); // repeat 80 times
           process.stdout.write(hr.join('\u25BC') + '\n' + output.join('\n') + '\n' + hr.join('\u25B2'));
         }
         done();
@@ -237,7 +237,7 @@ module.exports = function(outputPath, bannerWidth) {
 
       }, function (done) {
         if (output.length) {
-          var hr = new Array(bannerWidth + 1); // repeat 80 times
+          var hr = new Array(number(bannerWidth) + 1); // repeat 80 times
           process.stdout.write(hr.join('\u25BC') + '\n' + output.join('\n') + '\n' + hr.join('\u25B2'));
         }
         done();
