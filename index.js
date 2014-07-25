@@ -55,10 +55,14 @@ function trackSources() {
   };
 }
 
-module.exports = function(temp) {
+/**
+ * Create an instance
+ * @param outputPath A temp directory to perform compilation in, usually temporary
+ * @param bannerWidth The width of banners comment, or zero for none
+ */
+module.exports = function(outputPath, bannerWidth) {
   'use strict';
   var sourceTracking = trackSources();
-  var outputPath     = temp;
   return {
 
     /**
@@ -178,7 +182,8 @@ module.exports = function(temp) {
           output.push(item);
         }
         if (output.length) {
-          process.stdout.write('\n' + output.join('\n') + '\n');
+          var hr = new Array(bannerWidth + 1); // repeat 80 times
+          process.stdout.write(hr.join('\u25BC') + '\n' + output.join('\n') + '\n' + hr.join('\u25B2'));
         }
         done();
       });
@@ -232,7 +237,8 @@ module.exports = function(temp) {
 
       }, function (done) {
         if (output.length) {
-          process.stdout.write('\n' + output.join('\n') + '\n');
+          var hr = new Array(bannerWidth + 1); // repeat 80 times
+          process.stdout.write(hr.join('\u25BC') + '\n' + output.join('\n') + '\n' + hr.join('\u25B2'));
         }
         done();
       });
