@@ -57,7 +57,7 @@ function trackSources() {
 
 /**
  * Create an instance
- * @param outputPath A temp directory to perform compilation in, usually temporary
+ * @param outputPath A directory in which to assemble library and perform compilation, usually temporary
  * @param bannerWidth The width of banners comment, or zero for none
  */
 module.exports = function(outputPath, bannerWidth) {
@@ -75,7 +75,7 @@ module.exports = function(outputPath, bannerWidth) {
         var session = sourceTracking.session();
         return readable
           .pipe(session.before())
-          .pipe(gulp.dest(temp))
+          .pipe(gulp.dest(outputPath))
           .pipe(session.after());
       });
     },
