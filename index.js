@@ -281,30 +281,37 @@ module.exports = function(temp) {
     },
 
     /**
-     * Inject a single application JS file for each HTML file in the stream.
-     * Outputs a stream of files with amended contents.
-     * @param {string} jsBasePath An absolute or root relative base path for the javascript file
+     * Inject all JS and CSS files found in the same relative directory as the HTML file in the stream.
+     * Where a <code>jsBasePath</code> is not given JS is presumed to be adjacent to HTML.
+     * Where a <code>cssBasePath</code> is not given CSS is presumed to be adjacent to HTML.
+     * Outputs a stream of HTML files with amended content.
+     * @param {string} [jsBasePath] An absolute or root relative base path for javascript files
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
-    injectAppJS: function(jsBasePath) {
+    injectAppJSCSS: function(jsBasePath, cssBasePath) {
       return through.obj(function(file, encoding, done) {
         var stream = this;
 
         // infer the html base path from the file.base and use this as a base to locate
         //  the corresponding javascript file
-        var htmlPath  = path.resolve(file.path);
+        var htmlName  = path.basename(file.path);
+        var htmlPath  = path.resolve(file.path.replace(htmlName, ''));
         var htmlBase  = path.resolve(file.base);
-        var jsBase    = path.resolve(jsBasePath);
-        var jsFile    = htmlPath.replace(htmlBase, jsBase).replace(/\.html?$/, '.js');
-        var jsSources = gulp.src(jsFile, { read: false })
+        var jsBase    = (jsBasePath ) ? path.resolve(jsBasePath)  : htmlBase;
+        var cssBase   = (cssBasePath) ? path.resolve(cssBasePath) : htmlBase;
+        var glob      = [
+            htmlPath.replace(htmlBase, jsBase)  + '/*.js',
+            htmlPath.replace(htmlBase, cssBase) + '/*.css'
+        ];
+        var sources = gulp.src(glob, { read: false })
           .pipe(semiflat(jsBase))
           .pipe(slash());
 
-        // pass the html file into a stream that injects the given javascript source
+        // pass the html file into a stream that injects the given sources
         //  then add the resulting file to the output stream
         throughPipes(function(readable) {
           return readable
-            .pipe(inject(jsSources));
+            .pipe(inject(sources));
         })
           .output(function(file) {
             stream.push(file);
