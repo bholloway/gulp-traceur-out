@@ -132,13 +132,29 @@ module.exports = function(outputPath, bannerWidth) {
             stream.push(pending);
             done();
 
-            // output JS and MAP files to the stream
-            //  ensure that their paths are platform non-specific and relative to the outputPath
+          // output JS and MAP files to the stream
+          //  ensure that their paths are platform non-specific and relative to the outputPath
+          //  also adjust .map to .js.map to avoid conflict with similarly named css files and their maps
           } else {
             gulp.src(outTemp.replace(/\.js$/, '.*'))
               .pipe(gulp.dest(outPath))
               .pipe(semiflat(outBase))
               .on('data', function(file) {
+                switch (path.extname(file.path)) {
+
+                  // update the //#sourceMappingURL tag
+                  case '.js':
+                    var prefix   = path.basename(filename).replace(path.extname(filename), '');
+                    var source   = '^\\s*(//#\\s*sourceMappingURL\\s*=\\s*' + prefix + ').map\\s*$';
+                    var contents = file.contents.toString().replace(new RegExp(source, 'im'), '$1.js.map');
+                    file.contents = new Buffer(contents);
+                    break;
+
+                  // change the filename
+                  case '.map':
+                    file.path = file.path.replace(/\.map$/, '.js.map');
+                    break;
+                }
                 stream.push(file);
               }).on('end', function() {
                 done();
@@ -269,6 +285,7 @@ module.exports = function(outputPath, bannerWidth) {
         // where the file is a MAP file
         if (path.extname(file.path) === '.map') {
           var sourceMap = JSON.parse(file.contents.toString());
+          delete sourceMap.file;
           delete sourceMap.sourcesContent;
           for (var key in sourceMap) {
             if (typeof sourceMap[key] === typeof '') {
