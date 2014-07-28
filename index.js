@@ -137,9 +137,7 @@ module.exports = function(outputPath, bannerWidth) {
           //  also adjust .map to .js.map to avoid conflict with similarly named css files and their maps
           } else {
             gulp.src(outTemp.replace(/\.js$/, '.*'))
-              .pipe(gulp.dest(outPath))
-              .pipe(semiflat(outBase))
-              .on('data', function(file) {
+              .pipe(through.obj(function(file, encoding, done) {
                 switch (path.extname(file.path)) {
 
                   // update the //#sourceMappingURL tag
@@ -155,6 +153,12 @@ module.exports = function(outputPath, bannerWidth) {
                     file.path = file.path.replace(/\.map$/, '.js.map');
                     break;
                 }
+                this.push(file);
+                done();
+              }))
+              .pipe(gulp.dest(outPath))
+              .pipe(semiflat(outBase))
+              .on('data', function(file) {
                 stream.push(file);
               }).on('end', function() {
                 done();
