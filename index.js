@@ -27,8 +27,8 @@ function trackSources() {
         },
         after: function() {
           return through.obj(function(file, encode, done){
-            var source = minimatch.makeRe(file.path)
-              .source.replace(/^\^|\$$/g, '') // match text anywhere on the line by removing line start/end
+            var source = minimatch.makeRe(file.path).source
+              .replace(/^\^|\$$/g, '')        // match text anywhere on the line by removing line start/end
               .replace(/\\\//g, '[\\\\\\/]'); // detect any platform path format
             after.push(source);
             this.push(file);
@@ -58,13 +58,9 @@ function trackSources() {
 /**
  * Create an instance
  * @param outputPath A directory in which to assemble library and perform compilation, usually temporary
- * @param bannerWidth The width of banners comment, or zero for none
  */
-module.exports = function(outputPath, bannerWidth) {
+module.exports = function(outputPath) {
   'use strict';
-  var hr             = new Array((Number(bannerWidth) || 0) + 1); // this is a good trick to repeat a character N times
-  var start          = (hr.length > 1) ? (hr.join('\u25BC') + '\n') : '';
-  var stop           = (hr.length > 1) ? (hr.join('\u25B2') + '\n') : '';
   var sourceTracking = trackSources();
   return {
 
@@ -171,9 +167,10 @@ module.exports = function(outputPath, bannerWidth) {
     /**
      * A terse reporter for JSHint that uses the format as <code>traceurReporter</code>.
      * Outputs elements from the input stream without transformation.
+     * @param bannerWidth The width of banner comment, or zero for none
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
-    jsHintReporter: function() {
+    jsHintReporter: function(bannerWidth) {
       var output = [ ];
       var item   = '';
       var prevfile;
@@ -205,6 +202,10 @@ module.exports = function(outputPath, bannerWidth) {
           output.push(item);
         }
         if (output.length) {
+          var width = Number(bannerWidth) || 0;
+          var hr    = new Array(width + 1);   // this is a good trick to repeat a character N times
+          var start = (width > 0) ? (hr.join('\u25BC') + '\n') : '';
+          var stop  = (width > 0) ? (hr.join('\u25B2') + '\n') : '';
           process.stdout.write(start + '\n' + output.join('\n') + '\n' + stop);
         }
         done();
@@ -214,13 +215,13 @@ module.exports = function(outputPath, bannerWidth) {
     /**
      * A reporter for the <code>transpile</code> step.
      * Strips from the stream files that failed compilation and displays their error message.
+     * @param bannerWidth The width of banner comment, or zero for none
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
-    traceurReporter: function() {
+    traceurReporter: function(bannerWidth) {
       var output = [ ];
 
       // push each item to an output buffer
-      // display the output buffer with padding before and after and between each item
       return through.obj(function (file, encoding, done) {
 
         // unsuccessful element have a the correct properties
@@ -257,8 +258,13 @@ module.exports = function(outputPath, bannerWidth) {
         }
         done();
 
+      // display the output buffer with padding before and after and between each item
       }, function (done) {
         if (output.length) {
+          var width = Number(bannerWidth) || 0;
+          var hr    = new Array(width + 1);   // this is a good trick to repeat a character N times
+          var start = (width > 0) ? (hr.join('\u25BC') + '\n') : '';
+          var stop  = (width > 0) ? (hr.join('\u25B2') + '\n') : '';
           process.stdout.write(start + '\n' + output.join('\n') + '\n' + stop);
         }
         done();
