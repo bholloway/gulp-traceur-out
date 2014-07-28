@@ -84,7 +84,7 @@ module.exports = function(outputPath, bannerWidth) {
     },
 
     /**
-     * Define source files from the input stream but do note copy to the temporary directory.
+     * Define source files from the input stream but do not copy to the temporary directory.
      * Useful for enforcing correct path format in error messages.
      * Outputs a stream of the same files.
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
