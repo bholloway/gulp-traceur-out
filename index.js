@@ -3,68 +3,25 @@ var path = require('path');
 
 var through = require('through2');
 var throughPipes = require('through-pipes');
-var minimatch = require('minimatch');
 var gulp = require('gulp');
 var gutil = require('gulp-util');
 var inject = require('gulp-inject');
 var slash = require('gulp-slash');
 var semiflat = require('gulp-semiflat');
-
-function trackSources() {
-  'use strict';
-  var sessions = [ ];
-  return {
-    session: function() {
-      var before  = [ ];
-      var after   = [ ];
-      var session = {
-        before: function() {
-          return through.obj(function(file, encode, done){
-            before.push(path.resolve(file.path));  // enforce correct path format for the platform
-            this.push(file);
-            done();
-          });
-        },
-        after: function() {
-          return through.obj(function(file, encode, done){
-            var source = minimatch.makeRe(file.path).source
-              .replace(/^\^|\$$/g, '')        // match text anywhere on the line by removing line start/end
-              .replace(/\\\//g, '[\\\\\\/]'); // detect any platform path format
-            after.push(source);
-            this.push(file);
-            done();
-          });
-        },
-        replace: function(text) {
-          for (var i = Math.min(before.length, after.length) - 1; i >= 0; i--) {
-          var regexp = new RegExp(after[i], 'gm');
-            text = text.replace(regexp, before[i]);
-          }
-          return text;
-        }
-	    };
-      sessions.push(session);
-      return session;
-    },
-	  replace: function(text) {
-      sessions.forEach(function(session) {
-	      text = session.replace(text);
-      });
-      return text;
-    }
-  };
-}
+var trackFilenames = require('gulp-track-filenames');
 
 /**
  * Create an instance.
  * @param {string} outputPath A directory in which to assemble library and perform compilation, usually temporary
+ * @returns {{ libraries: function, sources: function, transpile: function, jsHintReporter: function,
+ * traceurReporter: function, adjustSourceMaps: function }}
  */
 module.exports = function(outputPath) {
   'use strict';
   if (typeof outputPath !== 'string') {
     throw new Error('outputPath is required but was not specified');
   }
-  var sourceTracking = trackSources();
+  var sourceTracking = new trackFilenames();
   return {
 
     /**
@@ -74,11 +31,11 @@ module.exports = function(outputPath) {
      */
     libraries: function() {
       return throughPipes(function(readable) {
-        var session = sourceTracking.session();
+        var tracking = sourceTracking.create();
         return readable
-          .pipe(session.before())
+          .pipe(tracking.before())
           .pipe(gulp.dest(outputPath))
-          .pipe(session.after());
+          .pipe(tracking.after());
       });
     },
 
@@ -90,10 +47,10 @@ module.exports = function(outputPath) {
      */
     sources: function() {
       return throughPipes(function(readable) {
-	    var session = sourceTracking.session();
+	    var tracking = sourceTracking.create();
         return readable
-          .pipe(session.before())
-          .pipe(session.after());
+          .pipe(tracking.before())
+          .pipe(tracking.after());
       });
     },
 
@@ -250,9 +207,9 @@ module.exports = function(outputPath) {
           }
       
           // report unique errors in original sources
-          var unmapped = sourceTracking.replace(message);
-          if (output.indexOf(unmapped) < 0) {
-            output.push(unmapped);
+          var original = sourceTracking.replace(message);
+          if (output.indexOf(original) < 0) {
+            output.push(original);
           }
 
         // only successful elements to the output
@@ -285,8 +242,8 @@ module.exports = function(outputPath) {
 
         // adjust a single value
         function adjust(candidate) {
-          var unmapped     = sourceTracking.replace(candidate);
-          var rootRelative = '/' + slash(path.relative(file.cwd, unmapped));
+          var original     = sourceTracking.replace(candidate);
+          var rootRelative = '/' + slash(path.relative(file.cwd, original));
           return rootRelative;
         }
 
