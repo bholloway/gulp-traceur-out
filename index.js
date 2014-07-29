@@ -56,11 +56,14 @@ function trackSources() {
 }
 
 /**
- * Create an instance
- * @param outputPath A directory in which to assemble library and perform compilation, usually temporary
+ * Create an instance.
+ * @param {string} outputPath A directory in which to assemble library and perform compilation, usually temporary
  */
 module.exports = function(outputPath) {
   'use strict';
+  if (typeof outputPath !== 'string') {
+    throw new Error('outputPath is required but was not specified');
+  }
   var sourceTracking = trackSources();
   return {
 
@@ -167,7 +170,7 @@ module.exports = function(outputPath) {
     /**
      * A terse reporter for JSHint that uses the format as <code>traceurReporter</code>.
      * Outputs elements from the input stream without transformation.
-     * @param bannerWidth The width of banner comment, or zero for none
+     * @param {number?} bannerWidth The width of banner comment, zero or omitted for none
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
     jsHintReporter: function(bannerWidth) {
@@ -215,7 +218,7 @@ module.exports = function(outputPath) {
     /**
      * A reporter for the <code>transpile</code> step.
      * Strips from the stream files that failed compilation and displays their error message.
-     * @param bannerWidth The width of banner comment, or zero for none
+     * @param {number?} bannerWidth The width of banner comment, zero or omitted for none
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
     traceurReporter: function(bannerWidth) {
@@ -319,7 +322,8 @@ module.exports = function(outputPath) {
      * Where a <code>jsBasePath</code> is not given JS is presumed to be adjacent to HTML.
      * Where a <code>cssBasePath</code> is not given CSS is presumed to be adjacent to HTML.
      * Outputs a stream of HTML files with amended content.
-     * @param {string} [jsBasePath] An absolute or root relative base path for javascript files
+     * @param {string} jsBasePath An absolute or root relative base path for javascript files
+     * @param {string} cssBasePath An absolute or root relative base path for css files
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
     injectAppJSCSS: function(jsBasePath, cssBasePath) {
