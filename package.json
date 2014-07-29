@@ -32,6 +32,6 @@
     "gulp-slash": "latest",
     "gulp-semiflat": "latest",
     "through-pipes": "latest",
-    "gulp-track-filenames": "git://github.com/bholloway/gulp-track-filenames"
+    "gulp-track-filenames": "latest"
   }
 }
