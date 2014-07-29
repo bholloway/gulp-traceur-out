@@ -20,8 +20,11 @@ Please refer to the [proof of concept](https://github.com/bholloway/es6-modular)
 
 Create an instance.
 
-@param {string} `outputPath` A directory in which to assemble library and perform compilation, usually temporary
+@param `{string} outputPath` A directory in which to assemble library and perform compilation, usually temporary.
 
+@returns `{{ libraries: function, sources: function, transpile: function, jsHintReporter: function,
+ traceurReporter: function, adjustSourceMaps: function }}`
+ 
 ### `.libraries()`
 
 Copy library files from in the input stream to the temporary directory in preparation for `transpile`.
