@@ -16,13 +16,13 @@ Please refer to the [proof of concept](https://github.com/bholloway/es6-modular)
 
 ## Reference
 
-### `({string} outputPath) : [instance]`
+### `(outputPath)`
 
 Create an instance.
 
 @param {string} `outputPath` A directory in which to assemble library and perform compilation, usually temporary
 
-### `.libraries() : {stream.Through}`
+### `.libraries()`
 
 Copy library files from in the input stream to the temporary directory in preparation for `transpile`.
 
@@ -30,7 +30,7 @@ Outputs a stream of the same files, now found in the temp directory.
 
 @returns `{stream.Through}` A through stream that performs the operation of a gulp stream
 
-### `.sources() : {stream.Through}`
+### `.sources()`
 
 Define source files from the input stream but do not copy to the temporary directory.
 
@@ -40,7 +40,7 @@ Outputs a stream of the same files.
 
 @returns `{stream.Through}` A through stream that performs the operation of a gulp stream.
 
-### `.transpile() : {stream.Through}`
+### `.transpile()`
 
 Call `traceur` from the system shell to compile the source files int the stream.
 
@@ -50,7 +50,7 @@ Outputs a stream of compiled files, in relative locations in the temp directory.
 
 @returns `{stream.Through}` A through stream that performs the operation of a gulp stream.
 
-### `.jsHintReporter([bannerWidth]) : {stream.Through}`
+### `.jsHintReporter([bannerWidth])`
 
 A terse reporter for JSHint that uses the format as <code>traceurReporter</code>.
 
@@ -60,7 +60,7 @@ Outputs elements from the input stream without transformation.
 
 @returns `{stream.Through}` A through stream that performs the operation of a gulp stream.
 
-### `.traceurReporter([bannerWidth]) : {stream.Through}`
+### `.traceurReporter([bannerWidth])`
 
 A terse reporter for JSHint that uses the format as `traceurReporter`.
 
@@ -70,7 +70,7 @@ Outputs elements from the input stream without transformation.
 
 @returns `{stream.Through}` A through stream that performs the operation of a gulp stream.
 
-### `.adjustSourceMaps() : {stream.Through}`
+### `.adjustSourceMaps()`
 
 Correct the sources in `.map` source map files to point to their original sources (rather than those in the temp
 directory that was used during compilation).
@@ -79,7 +79,7 @@ Outputs a stream of input files with possibly amended contents.
 
 @returns `{stream.Through}` A through stream that performs the operation of a gulp stream.
 
-### `.injectAppJSCSS(jsBasePath, cssBasePath) : {stream.Through}`
+### `.injectAppJSCSS([jsBasePath], [cssBasePath])`
 
 Inject all JS and CSS files found in the same relative directory as the HTML file in the stream.
 
