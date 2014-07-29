@@ -1,13 +1,12 @@
-var child = require('child_process');
-var path = require('path');
-
-var through = require('through2');
-var throughPipes = require('through-pipes');
-var gulp = require('gulp');
-var gutil = require('gulp-util');
-var inject = require('gulp-inject');
-var slash = require('gulp-slash');
-var semiflat = require('gulp-semiflat');
+var child          = require('child_process');
+var path           = require('path');
+var through        = require('through2');
+var throughPipes   = require('through-pipes');
+var gulp           = require('gulp');
+var gutil          = require('gulp-util');
+var inject         = require('gulp-inject');
+var slash          = require('gulp-slash');
+var semiflat       = require('gulp-semiflat');
 var trackFilenames = require('gulp-track-filenames');
 
 /**
