@@ -23,7 +23,7 @@ Create an instance.
 @param `{string} outputPath` A directory in which to assemble library and perform compilation, usually temporary.
 
 @returns `{{ libraries: function, sources: function, transpile: function, jsHintReporter: function,
- traceurReporter: function, adjustSourceMaps: function }}`
+ traceurReporter: function, adjustSourceMaps: function, injectAppJS:function }}`
  
 ### `.libraries()`
 
@@ -82,19 +82,15 @@ Outputs a stream of input files with possibly amended contents.
 
 @returns `{stream.Through}` A through stream that performs the operation of a gulp stream.
 
-### `.injectAppJSCSS([jsBasePath], [cssBasePath])`
+### `.injectAppJS([jsBasePath])`
 
-Inject all JS and CSS files found in the same relative directory as the HTML file in the stream.
+Inject all JS files found in the same relative directory as the HTML file in the stream.
 
 Where a `jsBasePath` is not given JS is presumed to be adjacent to HTML.
-
-Where a `cssBasePath` is not given CSS is presumed to be adjacent to HTML.
 
 Outputs a stream of HTML files with amended content.
 
 @param `{string?} jsBasePath` An absolute or root relative base path for javascript files.
-
-@param `{string?} cssBasePath` An absolute or root relative base path for css files.
 
 @returns `{stream.Through}` A through stream that performs the operation of a gulp stream.
     
