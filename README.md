@@ -14,6 +14,13 @@ npm install --save-dev gulp-traceur-out
 
 Please refer to the [proof of concept](https://github.com/bholloway/es6-modular).
 
+## Comparisons
+
+This plugin is influenced by [Guy Bedford's article](http://guybedford.com/practical-workflows-for-es6-modules).
+
+It arguably duplicates the functionality of [Browserify](http://browserify.org/). Please consider which implementation
+best suits your needs.
+
 ## Reference
 
 ### `(outputPath)`
@@ -49,13 +56,13 @@ Call `traceur` from the system shell to compile the source files int the stream.
 
 Uses libraries that were copied to the temp directory by the `sources` operation.
 
-Outputs a stream of compiled files, in relative locations in the temp directory.
+Outputs a stream of compiled files and their source-maps, alternately.
 
 @returns `{stream.Through}` A through stream that performs the operation of a gulp stream.
 
 ### `.jsHintReporter([bannerWidth])`
 
-A terse reporter for JSHint that uses the format as <code>traceurReporter</code>.
+A terse reporter for JSHint that uses the format as `traceurReporter`.
 
 Outputs elements from the input stream without transformation.
 
@@ -65,9 +72,9 @@ Outputs elements from the input stream without transformation.
 
 ### `.traceurReporter([bannerWidth])`
 
-A terse reporter for JSHint that uses the format as `traceurReporter`.
+A reporter for the `transpile` step.
 
-Outputs elements from the input stream without transformation.
+Strips from the stream files that failed compilation and displays their error message.
 
 @param `{number?} bannerWidth` The width of banner comment, zero or omitted for none.
 
