@@ -94,11 +94,12 @@ module.exports = function (outputPath) {
           } else {
             gulp.src(outTemp.replace(/\.js$/, '.*'))
               .pipe(through.obj(function (file, encoding, done) {
-                switch (path.extname(file.path)) {
+                var ext = path.extname(file.path);
+                switch (ext) {
 
                   // update the //#sourceMappingURL tag
                   case '.js':
-                    var prefix   = path.basename(filename).replace(path.extname(filename), '');
+                    var prefix   = path.basename(filename, ext);
                     var source   = '^\\s*(//#\\s*sourceMappingURL\\s*=\\s*' + prefix + ').map\\s*$';
                     var contents = file.contents.toString().replace(new RegExp(source, 'im'), '$1.js.map');
                     file.contents = new Buffer(contents);
