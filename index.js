@@ -78,10 +78,11 @@ module.exports = function (outputPath) {
 
           // traceur error implies empty file with error property
           if (error) {
-            var pending = new gutil.File();
-            pending.cwd           = cwd;
-            pending.base          = outBase;
-            pending.path          = outPath;
+            var pending = new gutil.File({
+              cwd:  cwd,
+              base: outBase,
+              path: outPath
+            });
             pending.traceurSource = file;
             pending.traceurError  = error.toString();
             stream.push(pending);
