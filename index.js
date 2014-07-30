@@ -56,7 +56,7 @@ module.exports = function(outputPath) {
     /**
      * Call <code>traceur</code> from the system shell to compile the source files int the stream.
      * Uses libraries that were copied to the temp directory by the <code>sources</code> operation.
-     * Outputs a stream of compiled files, in relative locations in the temp directory.
+     * Outputs a stream of compiled files and their source-maps, alternately.
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
     transpile: function() {
