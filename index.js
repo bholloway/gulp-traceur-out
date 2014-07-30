@@ -12,10 +12,10 @@ var trackFilenames = require('gulp-track-filenames');
 /**
  * Create an instance.
  * @param {string} outputPath A directory in which to assemble library and perform compilation, usually temporary
- * @returns {{ libraries: function, sources: function, transpile: function, jsHintReporter: function,
- * traceurReporter: function, adjustSourceMaps: function }}
+ * @returns {{libraries: function, sources: function, transpile: function, jsHintReporter: function,
+ *  traceurReporter: function, adjustSourceMaps: function, injectAppJS: function}}
  */
-module.exports = function(outputPath) {
+module.exports = function (outputPath) {
   'use strict';
   if (typeof outputPath !== 'string') {
     throw new Error('outputPath is required but was not specified');
@@ -28,8 +28,8 @@ module.exports = function(outputPath) {
      * Outputs a stream of the same files, now found in the temp directory.
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
-    libraries: function() {
-      return throughPipes(function(readable) {
+    libraries: function () {
+      return throughPipes(function (readable) {
         var tracking = sourceTracking.create();
         return readable
           .pipe(tracking.before())
@@ -44,8 +44,8 @@ module.exports = function(outputPath) {
      * Outputs a stream of the same files.
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
-    sources: function() {
-      return throughPipes(function(readable) {
+    sources: function () {
+      return throughPipes(function (readable) {
 	    var tracking = sourceTracking.create();
         return readable
           .pipe(tracking.before())
@@ -59,8 +59,8 @@ module.exports = function(outputPath) {
      * Outputs a stream of compiled files and their source-maps, alternately.
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
-    transpile: function() {
-      return through.obj(function(file, encoding, done) {
+    transpile: function () {
+      return through.obj(function (file, encoding, done) {
         var stream = this;
 
         // get parameters platform non-specific
@@ -74,7 +74,7 @@ module.exports = function(outputPath) {
         // call traceur from the shell
         //  at the time of writing there is no stable API for single file output
         var command  = [ 'traceur', '--source-maps', '--out', outTemp, file.path ].join(' ');
-        child.exec(command, { cwd: cwd }, function(error) {
+        child.exec(command, { cwd: cwd }, function (error) {
 
           // traceur error implies empty file with error property
           if (error) {
@@ -92,7 +92,7 @@ module.exports = function(outputPath) {
           //  also adjust .map to .js.map to avoid conflict with similarly named css files and their maps
           } else {
             gulp.src(outTemp.replace(/\.js$/, '.*'))
-              .pipe(through.obj(function(file, encoding, done) {
+              .pipe(through.obj(function (file, encoding, done) {
                 switch (path.extname(file.path)) {
 
                   // update the //#sourceMappingURL tag
@@ -113,9 +113,9 @@ module.exports = function(outputPath) {
               }))
               .pipe(gulp.dest(outPath))
               .pipe(semiflat(outBase))
-              .on('data', function(file) {
+              .on('data', function (file) {
                 stream.push(file);
-              }).on('end', function() {
+              }).on('end', function () {
                 done();
               });
           }
@@ -129,16 +129,16 @@ module.exports = function(outputPath) {
      * @param {number?} bannerWidth The width of banner comment, zero or omitted for none
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
-    jsHintReporter: function(bannerWidth) {
+    jsHintReporter: function (bannerWidth) {
       var output = [ ];
       var item   = '';
       var prevfile;
 
       // push each item to an output buffer
-      return through.obj(function(file, encoding, done) {
+      return through.obj(function (file, encoding, done) {
         if (file.jshint && !file.jshint.success && !file.jshint.ignored) {
           (function reporter(results) {
-            results.forEach(function(result) {
+            results.forEach(function (result) {
               var filename = sourceTracking.replace(result.file);
               var error    = result.error;
               if ((prevfile) && (prevfile !== filename) && (item) && (output.indexOf(item) < 0)) {
@@ -156,7 +156,7 @@ module.exports = function(outputPath) {
         done();
 
       // display the output buffer with padding before and after and between each item
-      }, function(done) {
+      }, function (done) {
         if ((item) && (output.indexOf(item) < 0)) {
           output.push(item);
         }
@@ -177,7 +177,7 @@ module.exports = function(outputPath) {
      * @param {number?} bannerWidth The width of banner comment, zero or omitted for none
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
-    traceurReporter: function(bannerWidth) {
+    traceurReporter: function (bannerWidth) {
       var output = [ ];
 
       // push each item to an output buffer
@@ -236,8 +236,8 @@ module.exports = function(outputPath) {
      * Outputs a stream of input files with possibly amended contents.
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
-    adjustSourceMaps: function() {
-      return through.obj(function(file, encoding, done) {
+    adjustSourceMaps: function () {
+      return through.obj(function (file, encoding, done) {
 
         // adjust a single value
         function adjust(candidate) {
@@ -274,16 +274,14 @@ module.exports = function(outputPath) {
     },
 
     /**
-     * Inject all JS and CSS files found in the same relative directory as the HTML file in the stream.
+     * Inject all JS files found in the same relative directory as the HTML file in the stream.
      * Where a <code>jsBasePath</code> is not given JS is presumed to be adjacent to HTML.
-     * Where a <code>cssBasePath</code> is not given CSS is presumed to be adjacent to HTML.
      * Outputs a stream of HTML files with amended content.
      * @param {string} jsBasePath An absolute or root relative base path for javascript files
-     * @param {string} cssBasePath An absolute or root relative base path for css files
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
-    injectAppJSCSS: function(jsBasePath, cssBasePath) {
-      return through.obj(function(file, encoding, done) {
+    injectAppJS: function (jsBasePath) {
+      return through.obj(function (file, encoding, done) {
         var stream = this;
 
         // infer the html base path from the file.base and use this as a base to locate
@@ -292,22 +290,18 @@ module.exports = function(outputPath) {
         var htmlPath  = path.resolve(file.path.replace(htmlName, ''));
         var htmlBase  = path.resolve(file.base);
         var jsBase    = (jsBasePath ) ? path.resolve(jsBasePath)  : htmlBase;
-        var cssBase   = (cssBasePath) ? path.resolve(cssBasePath) : htmlBase;
-        var glob      = [
-            htmlPath.replace(htmlBase, jsBase)  + '/*.js',
-            htmlPath.replace(htmlBase, cssBase) + '/*.css'
-        ];
+        var glob      = htmlPath.replace(htmlBase, jsBase)  + '/*.js';
         var sources = gulp.src(glob, { read: false })
           .pipe(semiflat(jsBase))
           .pipe(slash());
 
         // pass the html file into a stream that injects the given sources
         //  then add the resulting file to the output stream
-        throughPipes(function(readable) {
+        throughPipes(function (readable) {
           return readable
             .pipe(inject(sources));
         })
-          .output(function(file) {
+          .output(function (file) {
             stream.push(file);
             done();
           })
