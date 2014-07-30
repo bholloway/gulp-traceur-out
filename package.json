@@ -23,15 +23,14 @@
   "homepage": "https://github.com/bholloway/gulp-traceur-out",
   "main": "index.js",
   "dependencies": {
-    "through2": "~0.5.1",
-    "minimatch": "~0.4.0",
     "traceur": "0.0.51",
+    "through2": "~0.5.1",
+    "through-pipes": "latest",
     "gulp": "~3.8.6",
     "gulp-util": "~3.0.0",
     "gulp-inject": "~1.0.0",
     "gulp-slash": "latest",
     "gulp-semiflat": "latest",
-    "through-pipes": "latest",
     "gulp-track-filenames": "latest"
   }
 }
