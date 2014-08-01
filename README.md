@@ -80,6 +80,18 @@ Strips from the stream files that failed compilation and displays their error me
 
 @returns `{stream.Through}` A through stream that performs the operation of a gulp stream.
 
+### `.karma(options, [bannerWidth])`
+
+Run karma once only with the given `options` and the files from the stream appended.
+
+Removes any logging from the output.
+
+No output. Ends when the Karma process ends.
+
+@param `{object} options` Karma options.
+@param `{number?} bannerWidth` The width of banner comment, zero or omitted for none.
+@returns `{stream.Through}` A through stream that performs the operation of a gulp stream.
+
 ### `.adjustSourceMaps()`
 
 Correct the sources in `.map` source map files to point to their original sources (rather than those in the temp

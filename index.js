@@ -1,4 +1,4 @@
-var child          = require('child_process');
+var childProcess   = require('child_process');
 var path           = require('path');
 var through        = require('through2');
 var throughPipes   = require('through-pipes');
@@ -46,7 +46,7 @@ module.exports = function (outputPath) {
      */
     sources: function () {
       return throughPipes(function (readable) {
-	    var tracking = sourceTracking.create();
+        var tracking = sourceTracking.create();
         return readable
           .pipe(tracking.before())
           .pipe(tracking.after());
@@ -60,6 +60,7 @@ module.exports = function (outputPath) {
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
     transpile: function () {
+      var tracking = sourceTracking.create();
       return through.obj(function (file, encoding, done) {
         var stream = this;
 
@@ -68,23 +69,27 @@ module.exports = function (outputPath) {
         var filename = path.basename(file.path);
         var outCwd   = file.cwd;
         var outBase  = path.resolve(outputPath);
-        var outPath  = path.resolve(outputPath + '/' + file.relative.replace(filename, ''));
+        var outFinal = path.resolve(outputPath + '/' + file.relative);
         var outTemp  = path.resolve(outputPath + '/' + filename);
+        var outPath  = outFinal.replace(filename, '');
+
+        // track the output file against its source for completeness
+        tracking.define(file.path, outFinal);
 
         // call traceur from the shell
         //  at the time of writing there is no stable API for single file output
         var command  = [ 'node', 'traceur', '--source-maps', '--out', outTemp, file.path ].join(' ');
-        child.exec(command, { cwd: shellCwd }, function (error) {
+        childProcess.exec(command, { cwd: shellCwd }, function (stderr) {
 
           // traceur error implies empty file with error property
-          if (error) {
+          if (stderr) {
             var pending = new gutil.File({
               cwd:  outCwd,
               base: outBase,
-              path: outPath
+              path: outFinal
             });
             pending.traceurSource = file;
-            pending.traceurError  = error.toString();
+            pending.traceurError  = stderr.toString();
             stream.push(pending);
             done();
 
@@ -170,6 +175,50 @@ module.exports = function (outputPath) {
           process.stdout.write(start + '\n' + output.join('\n') + '\n' + stop);
         }
         done();
+      });
+    },
+
+    /**
+     * Run karma once only with the given <code>options</code> and the files from the stream appended.
+     * Removes any logging from the output.
+     * No output. Ends when the Karma process ends.
+     * @param {object} options Karma options
+     * @param {number?} bannerWidth The width of banner comment, zero or omitted for none
+     * @returns {stream.Through} A through stream that performs the operation of a gulp stream
+     */
+    karma: function (options, bannerWidth) {
+      options.singleRun = true;
+      options.autoWatch = false;
+      if (options.configFile) {
+        options.configFile = path.resolve(options.configFile);
+      }
+      var files = options.files = options.files || [ ];
+      return through.obj(function(file, encoding, done) {
+        var isValid = !(file.isNull()) && (path.extname(file.path) === '.js');
+        if (isValid && files.indexOf(file.path < 0)) {
+          files.push(file.path);
+        }
+        done();
+      }, function(done) {
+        if (files.length) {
+          var data    = require('querystring').escape(JSON.stringify(options));
+          var command = [ 'node', path.join(__dirname, 'lib', 'background.js'), data ].join(' ');
+          childProcess.exec(command, { cwd: process.cwd() }, function (stderr, stdout) {
+            var report   = stdout
+              .replace(/^LOG.*\n/gm, '')  // remove logging
+              .replace(/\n\n/gm, '\n')    // consolidate consecutive line breaks
+              .replace(/^\n|\n$/g, '');   // remove leading and trailing line breaks
+            var original = sourceTracking.replace(report) + '\n';
+            var width    = Number(bannerWidth) || 0;
+            var hr       = new Array(width + 1);   // this is a good trick to repeat a character N times
+            var start    = (width > 0) ? (hr.join('\u25BC') + '\n') : '';
+            var stop     = (width > 0) ? (hr.join('\u25B2') + '\n') : '';
+            process.stdout.write(start + '\n' + original + '\n' + stop);
+            done();
+          });
+        } else {
+          done();
+        }
       });
     },
 
