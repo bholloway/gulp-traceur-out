@@ -84,8 +84,6 @@ Strips from the stream files that failed compilation and displays their error me
 
 Run karma once only with the given `options` and the files from the stream appended.
 
-Removes any logging from the output.
-
 No output. Ends when the Karma process ends.
 
 @param `{object} options` Karma options.

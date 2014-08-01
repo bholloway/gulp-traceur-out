@@ -181,7 +181,6 @@ module.exports = function (outputPath) {
 
     /**
      * Run karma once only with the given <code>options</code> and the files from the stream appended.
-     * Removes any logging from the output.
      * No output. Ends when the Karma process ends.
      * @param {object} options Karma options
      * @param {number?} bannerWidth The width of banner comment, zero or omitted for none
@@ -206,7 +205,7 @@ module.exports = function (outputPath) {
           var command = [ 'node', path.join(__dirname, 'lib', 'background.js'), data ].join(' ');
           childProcess.exec(command, { cwd: process.cwd() }, function (stderr, stdout) {
             var report = stdout
-              .replace(/^LOG.*\n/gm, '')  // remove logging
+//              .replace(/^LOG.*\n/gm, '')  // remove logging
               .replace(/\n\n/gm, '\n')    // consolidate consecutive line breaks
               .replace(/^\n|\n$/g, '');   // remove leading and trailing line breaks
             var original = sourceTracking.replace(report) + '\n';
