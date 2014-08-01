@@ -8,6 +8,7 @@ var inject         = require('gulp-inject');
 var slash          = require('gulp-slash');
 var semiflat       = require('gulp-semiflat');
 var trackFilenames = require('gulp-track-filenames');
+var querystring    = require('querystring');
 
 /**
  * Create an instance.
@@ -201,10 +202,10 @@ module.exports = function (outputPath) {
         done();
       }, function(done) {
         if (files.length) {
-          var data    = require('querystring').escape(JSON.stringify(options));
+          var data    = querystring.escape(JSON.stringify(options));
           var command = [ 'node', path.join(__dirname, 'lib', 'background.js'), data ].join(' ');
           childProcess.exec(command, { cwd: process.cwd() }, function (stderr, stdout) {
-            var report   = stdout
+            var report = stdout
               .replace(/^LOG.*\n/gm, '')  // remove logging
               .replace(/\n\n/gm, '\n')    // consolidate consecutive line breaks
               .replace(/^\n|\n$/g, '');   // remove leading and trailing line breaks
@@ -235,7 +236,7 @@ module.exports = function (outputPath) {
       return through.obj(function (file, encoding, done) {
 
         // unsuccessful element have a the correct properties
-        var isError = (file.isNull) && (file.traceurError) && (file.traceurSource);
+        var isError = (file.isNull()) && (file.traceurError) && (file.traceurSource);
         if (isError) {
     
           // bad import statement
