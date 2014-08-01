@@ -32,6 +32,6 @@
     "gulp-inject": "~1.0.0",
     "gulp-slash": "latest",
     "gulp-semiflat": "latest",
-    "gulp-track-filenames": "git://github.com/bholloway/gulp-track-filenames.git"
+    "gulp-track-filenames": "latest"
   }
 }
