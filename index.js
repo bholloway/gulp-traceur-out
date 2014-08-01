@@ -64,22 +64,22 @@ module.exports = function (outputPath) {
         var stream = this;
 
         // get parameters platform non-specific
-        var cwd      = file.cwd;
-        var relative = file.relative;
+        var shellCwd = path.resolve(file.cwd + '/node_modules/gulp-traceur-out/node_modules/traceur');
         var filename = path.basename(file.path);
+        var outCwd   = file.cwd;
         var outBase  = path.resolve(outputPath);
-        var outPath  = path.resolve(outputPath + '/' + relative.replace(filename, ''));
+        var outPath  = path.resolve(outputPath + '/' + file.relative.replace(filename, ''));
         var outTemp  = path.resolve(outputPath + '/' + filename);
 
         // call traceur from the shell
         //  at the time of writing there is no stable API for single file output
-        var command  = [ 'traceur', '--source-maps', '--out', outTemp, file.path ].join(' ');
-        child.exec(command, { cwd: cwd }, function (error) {
+        var command  = [ 'node', 'traceur', '--source-maps', '--out', outTemp, file.path ].join(' ');
+        child.exec(command, { cwd: shellCwd }, function (error) {
 
           // traceur error implies empty file with error property
           if (error) {
             var pending = new gutil.File({
-              cwd:  cwd,
+              cwd:  outCwd,
               base: outBase,
               path: outPath
             });
@@ -92,7 +92,7 @@ module.exports = function (outputPath) {
           //  ensure that their paths are platform non-specific and relative to the outputPath
           //  also adjust .map to .js.map to avoid conflict with similarly named css files and their maps
           } else {
-            gulp.src(outTemp.replace(/\.js$/, '.*'))
+            gulp.src([ outTemp, outTemp.replace(/\.js$/, '.map') ])
               .pipe(through.obj(function (file, encoding, done) {
                 var ext = path.extname(file.path);
                 switch (ext) {
