@@ -81,7 +81,7 @@ Strips from the stream files that failed compilation and displays their error me
 
 @returns `{stream.Through}` A through stream that performs the operation of a gulp stream.
 
-### `.jasmineConcat([replacements])`
+### `.jasmineConcat([replacements], [filename])`
 
 Concatenate specification files in preparation for compilation and unit testing.
 
@@ -94,7 +94,7 @@ An optional `filename` may be specified or `test-main.js` is otherwise used.
 
 @param `{object?} replacements` An object of methods keyed by the text to replace
 
-@param `{string?}` filename An explicit name for the virtual file
+@param `{string?} filename` An explicit name for the virtual file
 
 @returns `{stream.Through}` A through stream that performs the operation of a gulp stream
 
