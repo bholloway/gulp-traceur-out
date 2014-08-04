@@ -180,13 +180,102 @@ module.exports = function (outputPath) {
     },
 
     /**
+     * Concatenate specification files in preparation for unit testing.
+     * Any number of <code>replacements</code> may be specified for test-suite keywords.
+     * An optional `filename` may be specified or <code>test-main.js</code> is otherwise used.
+     * @param {object?} replacements An object of methods keyed by the text to replace
+     * @param {string?} filename An explicit name for the virtual file
+     * @returns {stream.Through} A through stream that performs the operation of a gulp stream
+     */
+    concatJasmine: function (replacements, filename) {
+      var imports      = [ ];
+      var concatenated = '';
+
+      // process parameters
+      var expressions = { };
+      if (typeof replacements === 'object') {
+        for (var key in replacements) {
+          var source = '^(\\s*describe\\s*\\(\\s*)(?:\'' + key + '\'|"' + key + '")\\s*,';
+          expressions[source] = replacements[key];
+        }
+      }
+      filename = filename || 'test-main.js';
+
+      /**
+       * Process a single file and infer the text that is to be concatenated.
+       * This is important because imports must occur once only across all files. Specification files must import only
+       * the default export from any files they require.
+       * @param file The vinyl file to process
+       * @returns {string} The content of the file that should be concatenated
+       */
+      function process(file) {
+        var text = file.contents.toString();
+        for (var source in expressions) {
+          var expression = new RegExp(source, 'mg');
+          var target     = expressions[source];
+          if (expression.test(text)) {
+            var value = (typeof target === 'function') ? target(file) : String(target);
+            text = text.replace(expression, '$1\'' + value + '\',');
+          }
+        }
+        var IMPORT_STATEMENT = /import\s+(.*)\s+from\s+['"](.*)['"];?\n?/;
+        var MULTIPLE_IMPORTS = /^\{|\}$/;
+        var analysis;
+        do {
+          analysis = IMPORT_STATEMENT.exec(text);
+          if (analysis) {
+
+            // remove the original statement
+            var start = analysis.index;
+            var stop  = start + analysis[0].length;
+            text = text.slice(0, start) + text.slice(stop);
+
+            // normalise the statement
+            var local      = analysis[1].replace(/\s+/g, '');
+            var from       = '\'' + analysis[2] + '\'';
+            var normalised = [ 'import', local, 'from', from ].join(' ') + ';';
+
+            // check that the local varaible is Name or {*} but not multitple named variables
+            // add a normalised form to the imports list
+            var isMultiple = MULTIPLE_IMPORTS.test(local);
+            if (isMultiple) {
+              throw new Error('All imported files must use a single default export only.');
+            } else if (imports.indexOf(normalised) < 0) {
+              imports.push(normalised);
+            }
+          }
+        } while(analysis);
+        return text;
+      }
+
+      // concatenate files as they present, then push the final file on completion
+      return through.obj(function(file, encoding, done) {
+        if (!file.isNull()) {
+          concatenated += process(file) + '\n';
+        }
+        done();
+      }, function(done) {
+        var text     = imports.concat(concatenated).join('\n');
+        var contents = new Buffer(text);
+        this.push(new gutil.File({
+          cwd:      process.cwd,
+          base:     path.resolve(outputPath),
+          path:     path.resolve(outputPath + '/' + filename),
+          contents: contents
+        }));
+        done();
+      });
+    },
+
+    /**
      * Run karma once only with the given <code>options</code> and the files from the stream appended.
+     * Removes any logging from the output.
      * No output. Ends when the Karma process ends.
      * @param {object} options Karma options
      * @param {number?} bannerWidth The width of banner comment, zero or omitted for none
-     * @returns {stream.Through} A through stream that performs the operation of a gulp stream
+     * @returns {stream.Through} A through strconcateam that performs the operation of a gulp stream
      */
-    karma: function (options, bannerWidth) {
+     karma: function (options, bannerWidth) {
       options.singleRun = true;
       options.autoWatch = false;
       if (options.configFile) {
@@ -205,9 +294,11 @@ module.exports = function (outputPath) {
           var command = [ 'node', path.join(__dirname, 'lib', 'background.js'), data ].join(' ');
           childProcess.exec(command, { cwd: process.cwd() }, function (stderr, stdout) {
             var report = stdout
-//              .replace(/^LOG.*\n/gm, '')  // remove logging
-              .replace(/\n\n/gm, '\n')    // consolidate consecutive line breaks
-              .replace(/^\n|\n$/g, '');   // remove leading and trailing line breaks
+              .replace(/^\s+/gm, '')
+//              .replace(/^LOG.*\n/gm, '')    // remove logging
+              .replace(/at\s+null\..*/gm, '') // remove file reference
+              .replace(/\n\n/gm, '\n')        // consolidate consecutive line breaks
+              .replace(/^\n|\n$/g, '');       // remove leading and trailing line breaks
             var original = sourceTracking.replace(report) + '\n';
             var width    = Number(bannerWidth) || 0;
             var hr       = new Array(width + 1);   // this is a good trick to repeat a character N times

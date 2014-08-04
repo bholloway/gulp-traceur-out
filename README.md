@@ -80,6 +80,23 @@ Strips from the stream files that failed compilation and displays their error me
 
 @returns `{stream.Through}` A through stream that performs the operation of a gulp stream.
 
+### `.jasmineConcat([replacements])`
+
+Concatenate specification files in preparation for compilation and unit testing.
+
+This is important because imports must occur once only across all files. Specification files must import only the
+default export from any files they require.
+
+Any number of `replacements` may be specified for test-suite keywords.
+
+An optional `filename` may be specified or `test-main.js` is otherwise used.
+
+@param `{object?} replacements` An object of methods keyed by the text to replace
+
+@param `{string?}` filename An explicit name for the virtual file
+
+@returns `{stream.Through}` A through stream that performs the operation of a gulp stream
+
 ### `.karma(options, [bannerWidth])`
 
 Run karma once only with the given `options` and the files from the stream appended.
