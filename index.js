@@ -14,7 +14,8 @@ var querystring    = require('querystring');
  * Create an instance.
  * @param {string} outputPath A directory in which to assemble library and perform compilation, usually temporary
  * @returns {{libraries: function, sources: function, transpile: function, jsHintReporter: function,
- *  traceurReporter: function, adjustSourceMaps: function, injectAppJS: function}}
+ *  traceurReporter: function, jasmineConcat: function, karma: function, adjustSourceMaps: function,
+ *  injectAppJS: function}}
  */
 module.exports = function (outputPath) {
   'use strict';
