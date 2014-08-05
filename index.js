@@ -418,6 +418,7 @@ module.exports = function (outputPath) {
 
     /**
      * Inject all JS files found in the same relative directory as the HTML file in the stream.
+     * Also inject all JS files found in the directories above, up to and including the base path.
      * Where a <code>jsBasePath</code> is not given JS is presumed to be adjacent to HTML.
      * Outputs a stream of HTML files with amended content.
      * @param {string} jsBasePath An absolute or root relative base path for javascript files
@@ -432,8 +433,11 @@ module.exports = function (outputPath) {
         var htmlName  = path.basename(file.path);
         var htmlPath  = path.resolve(file.path.replace(htmlName, ''));
         var htmlBase  = path.resolve(file.base);
-        var jsBase    = (jsBasePath ) ? path.resolve(jsBasePath)  : htmlBase;
-        var glob      = htmlPath.replace(htmlBase, jsBase)  + '/*.js';
+        var jsBase    = (jsBasePath) ? path.resolve(jsBasePath)  : htmlBase;
+        var relative  = htmlPath.replace(htmlBase, '').split(/[\\\/]/g);
+        var glob      = relative.map(function(unused, i, array) {
+          return [ jsBase ].concat(array.slice(0, i + 1)).concat('*.js').join('/');
+        });
         var sources = gulp.src(glob, { read: false })
           .pipe(semiflat(jsBase))
           .pipe(slash());

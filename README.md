@@ -121,6 +121,8 @@ Outputs a stream of input files with possibly amended contents.
 
 Inject all JS files found in the same relative directory as the HTML file in the stream.
 
+Also inject all JS files found in the directories above, up to and including the base path.
+
 Where a `jsBasePath` is not given JS is presumed to be adjacent to HTML.
 
 Outputs a stream of HTML files with amended content.
