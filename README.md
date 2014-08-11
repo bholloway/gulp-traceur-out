@@ -30,7 +30,7 @@ Create an instance.
 @param `{string} outputPath` A directory in which to assemble library and perform compilation, usually temporary.
 
 @returns `{{libraries: function, sources: function, transpile: function, jsHintReporter: function,
-  traceurReporter: function, jasmineConcat: function, karma: function, adjustSourceMaps: function,
+  traceurReporter: function, concatJasmine: function, karma: function, adjustSourceMaps: function,
   injectAppJS: function}}`
  
 ### `.libraries()`
@@ -81,14 +81,15 @@ Strips from the stream files that failed compilation and displays their error me
 
 @returns `{stream.Through}` A through stream that performs the operation of a gulp stream.
 
-### `.jasmineConcat([replacements], [filename])`
+### `.concatJasmine([replacements], [filename])`
 
 Concatenate specification files in preparation for compilation and unit testing.
 
 This is important because imports must occur once only across all files. Specification files must import only the
 default export from any files they require.
 
-Any number of `replacements` may be specified for test-suite keywords.
+Any number of `replacements` may be specified for the first string argument of test-suite methods such as `describe`,
+`module`.
 
 An optional `filename` may be specified or `test-main.js` is otherwise used.
 

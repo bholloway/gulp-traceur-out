@@ -14,7 +14,7 @@ var querystring    = require('querystring');
  * Create an instance.
  * @param {string} outputPath A directory in which to assemble library and perform compilation, usually temporary
  * @returns {{libraries: function, sources: function, transpile: function, jsHintReporter: function,
- *  traceurReporter: function, jasmineConcat: function, karma: function, adjustSourceMaps: function,
+ *  traceurReporter: function, concatJasmine: function, karma: function, adjustSourceMaps: function,
  *  injectAppJS: function}}
  */
 module.exports = function (outputPath) {
@@ -182,7 +182,8 @@ module.exports = function (outputPath) {
 
     /**
      * Concatenate specification files in preparation for unit testing.
-     * Any number of <code>replacements</code> may be specified for test-suite keywords.
+     * Any number of <code>replacements</code> may be specified for the first string argument of test-suite methods such
+     * as <code>describe</code>, <code>module</code>.
      * An optional `filename` may be specified or <code>test-main.js</code> is otherwise used.
      * @param {object?} replacements An object of methods keyed by the text to replace
      * @param {string?} filename An explicit name for the virtual file
@@ -196,7 +197,7 @@ module.exports = function (outputPath) {
       var expressions = { };
       if (typeof replacements === 'object') {
         for (var key in replacements) {
-          var source = '^(\\s*describe\\s*\\(\\s*)(?:\'' + key + '\'|"' + key + '")\\s*,';
+          var source = '((?:describe|module)\\s*\\(\\s*)(?:\'' + key + '\'|"' + key + '")';
           expressions[source] = replacements[key];
         }
       }
@@ -216,7 +217,7 @@ module.exports = function (outputPath) {
           var target     = expressions[source];
           if (expression.test(text)) {
             var value = (typeof target === 'function') ? target(file) : String(target);
-            text = text.replace(expression, '$1\'' + value + '\',');
+            text = text.replace(expression, '$1\'' + value + '\'');
           }
         }
         var IMPORT_STATEMENT = /import\s+(.*)\s+from\s+['"](.*)['"];?\n?/;
@@ -329,7 +330,7 @@ module.exports = function (outputPath) {
         // unsuccessful element have a the correct properties
         var isError = (file.isNull()) && (file.traceurError) && (file.traceurSource);
         if (isError) {
-    
+
           // bad import statement
           var analysis = (/[^].*Specified as (.*)\.\nImported by \.{0,2}(.*)\.\n/m).exec(file.traceurError);
           var message;
@@ -340,14 +341,14 @@ module.exports = function (outputPath) {
             var isSource  = (path.resolve(source.cwd + filename) === path.resolve(source.path));
             var absolute  = (isSource) ? source.path : path.resolve(file.base + '/' + filename);
             message = absolute + ':0:0: Import not found: ' + specified + '\n';
-      
+
           // all other errors
           } else {
             message = file.traceurError
               .replace(/^Error\:\s*Command failed\:\s*(.*)$/gm, '$1')
               .replace(/^\[Error\:\s*([^]*)\s*\]$/gm, '$1');   // for windows (n.b. [^]* is .* multiline)
           }
-      
+
           // report unique errors in original sources
           var original = sourceTracking.replace(message);
           if (output.indexOf(original) < 0) {
