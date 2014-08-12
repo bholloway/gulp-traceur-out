@@ -425,9 +425,10 @@ module.exports = function (outputPath) {
      * Where a <code>jsBasePath</code> is not given JS is presumed to be adjacent to HTML.
      * Outputs a stream of HTML files with amended content.
      * @param {string} jsBasePath An absolute or root relative base path for javascript files
+     * @param {object} opts Options for <code>inject</code>
      * @returns {stream.Through} A through stream that performs the operation of a gulp stream
      */
-    injectAppJS: function (jsBasePath) {
+    injectAppJS: function (jsBasePath, opts) {
       return through.obj(function (file, encoding, done) {
         var stream = this;
 
@@ -449,7 +450,7 @@ module.exports = function (outputPath) {
         //  then add the resulting file to the output stream
         throughPipes(function (readable) {
           return readable
-            .pipe(inject(sources));
+            .pipe(inject(sources, opts));
         })
           .output(function (file) {
             stream.push(file);
