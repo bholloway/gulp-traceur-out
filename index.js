@@ -80,7 +80,8 @@ module.exports = function (outputPath) {
 
         // call traceur from the shell
         //  at the time of writing there is no stable API for single file output
-        var command  = [ 'node', 'traceur', '--source-maps', '--out', outTemp, file.path ].join(' ');
+        var appPath = path.join(__dirname, 'node_modules', 'traceur', 'traceur');
+        var command = [ 'node', appPath, '--source-maps', '--out', outTemp, file.path ].join(' ');
         childProcess.exec(command, { cwd: shellCwd }, function (stderr) {
 
           // traceur error implies empty file with error property
@@ -292,8 +293,9 @@ module.exports = function (outputPath) {
         done();
       }, function(done) {
         if (files.length) {
+          var appPath = path.join(__dirname, 'lib', 'background.js');
           var data    = querystring.escape(JSON.stringify(options));
-          var command = [ 'node', path.join(__dirname, 'lib', 'background.js'), data ].join(' ');
+          var command = [ 'node', appPath, data ].join(' ');
           childProcess.exec(command, { cwd: process.cwd() }, function (stderr, stdout) {
             var report = stdout
               .replace(/^\s+/gm, '')
