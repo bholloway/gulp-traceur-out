@@ -298,7 +298,7 @@ module.exports = function (outputPath) {
           var appPath = path.join(__dirname, 'lib', 'background.js');
           var data    = querystring.escape(JSON.stringify(options));
           var command = [ 'node', quote(appPath), data ].join(' ');
-          childProcess.exec(command, { cwd: process.cwd() }, function (stderr, stdout) {
+          childProcess.exec(command, { cwd: __dirname }, function (stderr, stdout) {
             var report = stdout
               .replace(/^\s+/gm, '')
 //              .replace(/^LOG.*\n/gm, '')    // remove logging
