@@ -70,7 +70,6 @@ module.exports = function (outputPath) {
         var stream = this;
 
         // get parameters platform non-specific
-        var shellCwd = path.resolve(file.cwd + '/node_modules/gulp-traceur-out/node_modules/traceur');
         var filename = path.basename(file.path);
         var outCwd   = file.cwd;
         var outBase  = path.resolve(outputPath);
@@ -85,7 +84,7 @@ module.exports = function (outputPath) {
         //  at the time of writing there is no stable API for single file output
         var appPath = path.join(__dirname, 'node_modules', 'traceur', 'traceur');
         var command = [ 'node', quote(appPath), '--source-maps', '--out', quote(outTemp), quote(file.path) ].join(' ');
-        childProcess.exec(command, { cwd: shellCwd }, function (stderr) {
+        childProcess.exec(command, { cwd: __dirname }, function (stderr) {
 
           // traceur error implies empty file with error property
           if (stderr) {
