@@ -220,7 +220,7 @@ module.exports = function (outputPath) {
           var target     = expressions[source];
           if (expression.test(text)) {
             var value = (typeof target === 'function') ? target(file) : String(target);
-            text = text.replace(expression, '$1\'' + value + '\'');
+            text = text.replace(expression, '$1\'' + value.replace(/\\/g, '\\\\') + '\'');
           }
         }
         var IMPORT_STATEMENT = /import\s+(.*)\s+from\s+['"](.*)['"];?\n?/;
